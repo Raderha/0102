@@ -10,7 +10,7 @@ export default function NavBar() {
         </a>
         <nav className="nav__links" aria-label="Primary">
           <a href="#features">기능 소개</a>
-          <a href="#login">Login / Register</a>
+          <a href="/login">Login / Register</a>
           <a href="/career">직종 선택</a>
         </nav>
         <a className="btn btn-primary" href="#hero">모의 면접 시작</a>
