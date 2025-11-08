@@ -5,6 +5,7 @@ import Career from './pages/Career.jsx';
 import LoginPage from './pages/Login.jsx';
 import RegisterPage from './pages/Register.jsx';
 import FindPWPage from './pages/FindPW.jsx';
+import UploadFilePage from './pages/UploadFile.jsx';
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/findpw" element={<FindPWPage />} />
+        <Route path="/upload" element={<UploadFilePage />} />
       </Routes>
     </BrowserRouter>
   );

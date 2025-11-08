@@ -1,44 +1,55 @@
 import React from 'react';
 
-export default function Login() {
+export default function Login({ onClose, onOpenRegister, onOpenFindPW }) {
+  const handleFindPW = (e) => {
+    e.preventDefault();
+    if (onClose) onClose();
+    if (onOpenFindPW) onOpenFindPW();
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    if (onClose) onClose();
+    if (onOpenRegister) onOpenRegister();
+  };
+
   return (
-    <section style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.welcome}>
-          <div style={styles.welcomeContent}>
-            <div style={styles.logo}>JR</div>
-            <h1 style={styles.brand}>JobReady</h1>
-            <p style={styles.welcomeText}><br /><br />AI 기반 면접 시뮬레이션으로 <br /> 취업 성공률을 높이세요.</p>
-          </div>
-          <div style={styles.link}>www.jobready.com</div>
+    <div style={styles.container}>
+      <button className="auth-modal-close" onClick={onClose} aria-label="Close">×</button>
+      <div style={styles.welcome}>
+        <div style={styles.welcomeContent}>
+          <div style={styles.logo}>JR</div>
+          <h1 style={styles.brand}>JobReady</h1>
+          <p style={styles.welcomeText}><br /><br />AI 기반 면접 시뮬레이션으로 <br /> 취업 성공률을 높이세요.</p>
         </div>
+        <div style={styles.link}>www.jobready.com</div>
+      </div>
 
-        <div style={styles.formArea}>
-          <div style={styles.formBox}>
-            <h2 style={styles.title}>로그인</h2>
-            <p style={styles.subtitle}>계정에 로그인하여 면접을 준비하세요</p>
+      <div style={styles.formArea}>
+        <div style={styles.formBox}>
+          <h2 style={styles.title}>로그인</h2>
+          <p style={styles.subtitle}>계정에 로그인하여 면접을 준비하세요</p>
 
-            <form>
-              <div style={styles.group}>
-                <label htmlFor="email" style={styles.label}>이메일 주소</label>
-                <input id="email" type="email" placeholder="example@jobready.com" style={styles.input} />
-              </div>
-              <div style={styles.group}>
-                <label htmlFor="password" style={styles.label}>비밀번호</label>
-                <input id="password" type="password" placeholder="비밀번호를 입력하세요" style={styles.input} />
-              </div>
-              <div style={styles.options}>
-                <label style={styles.remember}><input type="checkbox" defaultChecked /> <span>비밀번호 저장</span></label>
-                <a href="/findpw" style={styles.anchor}>비밀번호 찾기</a>
-              </div>
-              <button type="button" style={styles.primaryBtn}>로그인</button>
-            </form>
+          <form>
+            <div style={styles.group}>
+              <label htmlFor="email" style={styles.label}>이메일 주소</label>
+              <input id="email" type="email" placeholder="example@jobready.com" style={styles.input} />
+            </div>
+            <div style={styles.group}>
+              <label htmlFor="password" style={styles.label}>비밀번호</label>
+              <input id="password" type="password" placeholder="비밀번호를 입력하세요" style={styles.input} />
+            </div>
+            <div style={styles.options}>
+              <label style={styles.remember}><input type="checkbox" defaultChecked /> <span>비밀번호 저장</span></label>
+              <a href="#" onClick={handleFindPW} style={styles.anchor}>비밀번호 찾기</a>
+            </div>
+            <button type="button" style={styles.primaryBtn}>로그인</button>
+          </form>
 
-            <p style={styles.helper}>계정이 없으신가요? <a href="/register" style={styles.anchor}>회원가입</a></p>
-          </div>
+          <p style={styles.helper}>계정이 없으신가요? <a href="#" onClick={handleRegister} style={styles.anchor}>회원가입</a></p>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -52,8 +63,7 @@ const theme = {
 };
 
 const styles = {
-  page: { background: '#f0f2f5', minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 16 },
-  container: { display: 'flex', width: 850, height: 550, borderRadius: 20, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', background: theme.white },
+  container: { display: 'flex', width: 850, height: 550, borderRadius: 20, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', background: theme.white, position: 'relative' },
   welcome: { flex: 1, background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`, color: theme.white, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', padding: 40, textAlign: 'center', position: 'relative' },
   welcomeContent: { marginTop: 50 },
   logo: { fontSize: '3rem', fontWeight: 700, marginBottom: 20, border: `3px solid ${theme.white}`, borderRadius: 10, padding: '0 15px', display: 'inline-block' },

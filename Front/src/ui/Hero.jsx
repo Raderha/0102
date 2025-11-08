@@ -1,6 +1,13 @@
 import React from 'react';
 
-export default function Hero() {
+export default function Hero({ onOpenUploadModal }) {
+  const handleClick = (e) => {
+    e.preventDefault();
+    if (onOpenUploadModal) {
+      onOpenUploadModal();
+    }
+  };
+
   return (
     <section id="hero" className="hero">
       <div className="container hero__grid">
@@ -15,7 +22,7 @@ export default function Hero() {
             웹 마이크로 답변하면 실시간으로 음성과 텍스트를 분석해 드립니다.
           </p>
           <div className="hero__cta">
-            <a className="btn btn-primary" href="#">모의 면접 시작</a>
+            <a className="btn btn-primary" href="#" onClick={handleClick}>모의 면접 시작</a>
             <a className="btn btn-ghost" href="#">링크 복사</a>
           </div>
           <p className="hero__footnote"></p>

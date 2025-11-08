@@ -1,36 +1,41 @@
 import React from 'react';
 
-export default function FindPW() {
+export default function FindPW({ onClose, onOpenLogin }) {
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (onClose) onClose();
+    if (onOpenLogin) onOpenLogin();
+  };
+
   return (
-    <section style={styles.page}>
-      <div style={styles.container}>
-        <div style={styles.welcome}>
-          <div style={styles.welcomeContent}>
-            <div style={styles.logo}>JR</div>
-            <h1 style={styles.brand}>JobReady</h1>
-            <p style={styles.welcomeText}>걱정 마세요! <br /><br />간단한 절차를 통해 <br />비밀번호를 재설정해 드립니다.</p>
-          </div>
-          <div style={styles.link}>www.jobready.com</div>
+    <div style={styles.container}>
+      <button className="auth-modal-close" onClick={onClose} aria-label="Close">×</button>
+      <div style={styles.welcome}>
+        <div style={styles.welcomeContent}>
+          <div style={styles.logo}>JR</div>
+          <h1 style={styles.brand}>JobReady</h1>
+          <p style={styles.welcomeText}>걱정 마세요! <br /><br />간단한 절차를 통해 <br />비밀번호를 재설정해 드립니다.</p>
         </div>
+        <div style={styles.link}>www.jobready.com</div>
+      </div>
 
-        <div style={styles.formArea}>
-          <div style={styles.formBox}>
-            <h2 style={styles.title}>비밀번호 찾기</h2>
-            <p style={styles.subtitle}>계정에 등록된 이메일 주소를 입력해 주세요.</p>
+      <div style={styles.formArea}>
+        <div style={styles.formBox}>
+          <h2 style={styles.title}>비밀번호 찾기</h2>
+          <p style={styles.subtitle}>계정에 등록된 이메일 주소를 입력해 주세요.</p>
 
-            <form>
-              <div style={styles.group}>
-                <label htmlFor="email" style={styles.label}>이메일 주소</label>
-                <input id="email" type="email" placeholder="example@jobready.com" style={styles.input} />
-              </div>
-              <button type="button" style={styles.primaryBtn}>재설정 링크 받기</button>
-            </form>
+          <form>
+            <div style={styles.group}>
+              <label htmlFor="email" style={styles.label}>이메일 주소</label>
+              <input id="email" type="email" placeholder="example@jobready.com" style={styles.input} />
+            </div>
+            <button type="button" style={styles.primaryBtn}>재설정 링크 받기</button>
+          </form>
 
-            <p style={styles.helper}><a href="/login" style={styles.anchor}>로그인 페이지로 돌아가기</a></p>
-          </div>
+          <p style={styles.helper}><a href="#" onClick={handleLogin} style={styles.anchor}>로그인 페이지로 돌아가기</a></p>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -44,8 +49,7 @@ const theme = {
 };
 
 const styles = {
-  page: { background: '#f0f2f5', minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 16 },
-  container: { display: 'flex', width: 850, height: 550, borderRadius: 20, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', background: theme.white },
+  container: { display: 'flex', width: 850, height: 550, borderRadius: 20, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.1)', background: theme.white, position: 'relative' },
   welcome: { flex: 1, background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)`, color: theme.white, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', padding: 40, textAlign: 'center' },
   welcomeContent: { marginTop: 50 },
   logo: { fontSize: '3rem', fontWeight: 700, marginBottom: 20, border: `3px solid ${theme.white}`, borderRadius: 10, padding: '0 15px', display: 'inline-block' },
