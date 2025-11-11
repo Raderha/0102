@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function UploadFile({ onClose }) {
   const [files, setFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
   const ALLOWED_TYPES = ['.txt', '.docx', '.pdf'];
@@ -103,10 +105,14 @@ export default function UploadFile({ onClose }) {
     }
     // 여기에 실제 업로드 로직 추가
     console.log('Files to upload:', files);
-    alert('파일이 성공적으로 업로드되었습니다.');
+    
+    // 모달이 열려있으면 닫고, 페이지로 이동
     if (onClose) {
       onClose();
     }
+    
+    // AiInterview 페이지로 이동
+    navigate('/interview');
   };
 
   return (

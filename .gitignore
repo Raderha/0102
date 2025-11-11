@@ -16,4 +16,23 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Environment variables
+.env
+.env.local
+
+# Firebase
+serviceAccountKey.json
+*.json
+!package.json
+!package-lock.json
 
