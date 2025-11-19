@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function AiInterview() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const question = "동기 처리와 비동기 처리의 차이점은 무엇인가요?";
 
@@ -36,15 +38,11 @@ export default function AiInterview() {
 
     setIsSubmitting(true);
     
-    // 서버 연동은 나중에 구현
+    // 테스트용: 바로 ScoreBoard로 이동
+    // TODO: 나중에 서버 연동 후 음성파일 분석 처리 추가
     setTimeout(() => {
-      alert('답변이 제출되었습니다!');
-      setIsSubmitting(false);
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }, 1000);
+      navigate('/scoreboard');
+    }, 500);
   };
 
   return (

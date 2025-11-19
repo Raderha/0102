@@ -23,7 +23,7 @@ export default function Hero({ onOpenUploadModal }) {
           </p>
           <div className="hero__cta">
             <a className="btn btn-primary" href="#" onClick={handleClick}>모의 면접 시작</a>
-            <a className="btn btn-ghost" href="#">링크 복사</a>
+            {/* <a className="btn btn-ghost" href="#">링크 복사</a> */}
           </div>
           <p className="hero__footnote"></p>
         </div>
