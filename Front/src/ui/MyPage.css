@@ -1,0 +1,386 @@
+.mypage-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  background: #f6f7fb;
+  min-height: calc(100vh - 200px);
+}
+
+.mypage-header {
+  margin-bottom: 32px;
+}
+
+.mypage-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+/* KPI Cards Grid */
+.mypage-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.mypage-kpi-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+}
+
+.mypage-kpi-card-pink {
+  background: #fef2f2;
+}
+
+.mypage-kpi-card-yellow {
+  background: #fffbeb;
+}
+
+.mypage-kpi-card-green {
+  background: #f0fdf4;
+}
+
+.mypage-kpi-card-event {
+  background: linear-gradient(135deg, #5b5ce2 0%, #ff6b6b 100%);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.mypage-kpi-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mypage-kpi-content {
+  flex: 1;
+}
+
+.mypage-kpi-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.mypage-kpi-card-event .mypage-kpi-number {
+  color: #fff;
+}
+
+.mypage-kpi-label {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.mypage-kpi-card-event .mypage-kpi-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mypage-event-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.mypage-event-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mypage-event-circle {
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 107, 107, 0.3);
+  border-radius: 50%;
+}
+
+/* Charts Grid */
+.mypage-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.mypage-chart-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+}
+
+.mypage-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.mypage-chart-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.mypage-chart-date {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.mypage-chart-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mypage-line-chart {
+  width: 100%;
+}
+
+.mypage-chart-legend {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.mypage-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mypage-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mypage-legend-dot-blue {
+  background: #5b5ce2;
+}
+
+.mypage-legend-dot-green {
+  background: #10b981;
+}
+
+.mypage-legend-dot-orange {
+  background: #f59e0b;
+}
+
+.mypage-legend-dot-red {
+  background: #ef4444;
+}
+
+.mypage-legend-label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.mypage-legend-value {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+/* Donut Chart */
+.mypage-donut-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.mypage-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 200px;
+}
+
+/* Task Card */
+.mypage-task-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.mypage-task-content {
+  flex: 1;
+}
+
+.mypage-task-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+
+.mypage-task-due {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.mypage-task-participant {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mypage-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mypage-participant-name {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.mypage-task-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.mypage-action-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.mypage-action-btn:hover {
+  color: var(--text);
+}
+
+.mypage-status-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mypage-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.mypage-status-dot-orange {
+  background: #f59e0b;
+}
+
+.mypage-status-dot-green {
+  background: #10b981;
+}
+
+.mypage-status-dot-white {
+  background: #e5e7ef;
+}
+
+.mypage-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.2s;
+  color: var(--muted);
+}
+
+.mypage-icon-btn:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.mypage-btn-ended {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mypage-btn-ended:hover {
+  background: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mypage-container {
+    padding: 24px 16px;
+  }
+
+  .mypage-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mypage-task-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .mypage-task-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .mypage-chart-legend {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

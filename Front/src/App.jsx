@@ -8,6 +8,8 @@ import FindPWPage from './pages/FindPW.jsx';
 import UploadFilePage from './pages/UploadFile.jsx';
 import AiInterviewPage from './pages/AiInterview.jsx';
 import ScoreBoardPage from './pages/ScoreBoard.jsx';
+import MyPagePage from './pages/MyPage.jsx';
+import CommunityPage from './pages/Community.jsx';
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
         <Route path="/upload" element={<UploadFilePage />} />
         <Route path="/interview" element={<AiInterviewPage />} />
         <Route path="/scoreboard" element={<ScoreBoardPage />} />
+        <Route path="/mypage" element={<MyPagePage />} />
+        <Route path="/community" element={<CommunityPage />} />
       </Routes>
     </BrowserRouter>
   );

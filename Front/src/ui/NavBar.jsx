@@ -27,6 +27,8 @@ export default function NavBar({ onOpenUploadModal, onOpenLoginModal, onOpenRegi
           <a href="#features">기능 소개</a>
           <a href="#" onClick={handleLoginClick}>Login / Register</a>
           <Link to="/career">직종 선택</Link>
+          <Link to="/mypage">My Page</Link>
+          <Link to="/community">Community</Link>
         </nav>
         <a className="btn btn-primary" href="#" onClick={handleUploadClick}>모의 면접 시작</a>
       </div>
