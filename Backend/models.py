@@ -12,11 +12,13 @@ class UserCredentials(BaseModel):
     email: str
     password: str
     name: str | None = None
+    desiredJob: str | None = None
 
 class AuthResponse(BaseModel):
     status: str
     message: str
     user_id: str | None = None
+    desiredJob: str | None = None
 
 # 이력서 분석 모델 (UC-2)
 class ResumeAnalysis(BaseModel):

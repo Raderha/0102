@@ -28,7 +28,7 @@ async def register_user(creds: UserCredentials):
         user_data = {
             "email": user.email,
             "name": creds.name,
-            "desiredJob": "미지정",
+            "desiredJob": creds.desiredJob if creds.desiredJob else "미지정",
             "created_at": datetime.now().isoformat(),
             "role": "user"
         }
@@ -65,6 +65,7 @@ async def login_user(creds: UserCredentials):
             
         user_doc = user_ref[0].to_dict()
         user_id = user_ref[0].id
+        desired_job = user_doc.get('desiredJob', None)
         
         # 참고: 실제 비밀번호 검증은 클라이언트 SDK가 담당하지만, 
         # 백엔드에서는 DB에서 사용자 ID를 찾아 반환하는 것으로 시뮬레이션합니다.
@@ -72,7 +73,8 @@ async def login_user(creds: UserCredentials):
         return AuthResponse(
             status="success",
             message=f"{user_doc.get('name', '사용자')}님, 로그인 성공!",
-            user_id=user_id
+            user_id=user_id,
+            desiredJob=desired_job
         )
     except Exception:
         # UC1-REQ-5: 로그인 실패 처리

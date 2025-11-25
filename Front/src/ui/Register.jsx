@@ -7,6 +7,7 @@ export default function Register({ onClose, onOpenLogin }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [desiredJob, setDesiredJob] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -45,6 +46,7 @@ export default function Register({ onClose, onOpenLogin }) {
           email: email,
           password: password,
           name: name,
+          desiredJob: desiredJob || undefined,
         }),
       });
 
@@ -135,14 +137,20 @@ export default function Register({ onClose, onOpenLogin }) {
             </div>
             <div style={styles.group}>
               <label htmlFor="job" style={styles.label}>관심 직무/분야 (선택)</label>
-              <select id="job" defaultValue="" style={styles.select} disabled={loading}>
+              <select 
+                id="job" 
+                value={desiredJob} 
+                onChange={(e) => setDesiredJob(e.target.value)}
+                style={styles.select} 
+                disabled={loading}
+              >
                 <option value="">직무를 선택하세요</option>
-                <option>개발 (프론트/백엔드)</option>
-                <option>디자인 (UI/UX)</option>
-                <option>기획 (PM/PO)</option>
-                <option>영업/마케팅</option>
-                <option>경영지원/회계</option>
-                <option>기타</option>
+                <option value="개발 (프론트/백엔드)">개발 (프론트/백엔드)</option>
+                <option value="디자인 (UI/UX)">디자인 (UI/UX)</option>
+                <option value="기획 (PM/PO)">기획 (PM/PO)</option>
+                <option value="영업/마케팅">영업/마케팅</option>
+                <option value="경영지원/회계">경영지원/회계</option>
+                <option value="기타">기타</option>
               </select>
             </div>
             <div style={styles.group}>
