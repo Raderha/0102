@@ -45,15 +45,38 @@ export default function Login({ onClose, onOpenRegister, onOpenFindPW }) {
         }),
       });
 
-      const data = await response.json();
+      // 응답이 비어있는지 확인
+      const contentType = response.headers.get('content-type');
+      let data = {};
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : {};
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          setError('서버 응답을 처리할 수 없습니다.');
+          setLoading(false);
+          return;
+        }
+      }
 
       if (response.ok && data.status === 'success') {
         // 로그인 성공
-        // user_id를 localStorage에 저장
+        // user_id와 desiredJob을 localStorage에 저장
         if (data.user_id) {
           localStorage.setItem('user_id', data.user_id);
           localStorage.setItem('user_email', email);
+          // job_field를 우선적으로 확인하고, 없으면 desiredJob 확인하여 저장
+          if (data.job_field) {
+            localStorage.setItem('user_job_field', data.job_field);
+          } else if (data.desiredJob) {
+            localStorage.setItem('user_job_field', data.desiredJob);
+          }
         }
+        
+        // 로그인 상태 변경 이벤트 발생 (NavBar 상태 업데이트용)
+        window.dispatchEvent(new Event('loginStatusChanged'));
         
         // 성공 메시지 표시 (선택사항)
         alert(data.message || '로그인 성공!');
@@ -64,12 +87,17 @@ export default function Login({ onClose, onOpenRegister, onOpenFindPW }) {
         // 페이지 새로고침 또는 상태 업데이트 (선택사항)
         window.location.reload();
       } else {
-        // 로그인 실패
+        // 로그인 실패 - FastAPI 에러 응답은 {detail: "..."} 형식
         setError(data.detail || data.message || '로그인에 실패했습니다.');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
+      // 네트워크 에러나 기타 에러 처리
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError('서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.');
+      } else {
+        setError('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
     } finally {
       setLoading(false);
     }

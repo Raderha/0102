@@ -8,14 +8,19 @@ export default function UploadFile({ onClose }) {
   // localStorage에서 저장된 desiredJob을 기본값으로 사용
   const [files, setFiles] = useState([]);
   const [jobField, setJobField] = useState(() => {
-    // 컴포넌트 마운트 시 localStorage에서 desiredJob 가져오기
-    return localStorage.getItem('desiredJob') || '';
+    // 컴포넌트 마운트 시 localStorage에서 user_job_field 우선, 없으면 desiredJob 가져오기
+    return localStorage.getItem('user_job_field') || localStorage.getItem('desiredJob') || '';
   });
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [showQuestionLoadingModal, setShowQuestionLoadingModal] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const preparationIntervals = useRef({}); // 파일 준비 interval 추적
 
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
   const ALLOWED_TYPES = ['.pdf'];
@@ -45,11 +50,36 @@ export default function UploadFile({ onClose }) {
         name: file.name,
         file: file, // 실제 File 객체 저장
         progress: 0,
-        status: 'pending' // pending, uploading, completed, error
+        status: 'preparing' // preparing, ready, uploading, completed, error
       };
       
       setFiles(prev => [...prev, newFile]);
+      
+      // 파일 준비 진행률 시뮬레이션 (0% → 100%)
+      simulateFilePreparation(fileId);
     });
+  };
+
+  const simulateFilePreparation = (fileId) => {
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 10;
+      
+      setFiles(prev => prev.map(file => {
+        if (file.id === fileId) {
+          if (progress >= 100) {
+            clearInterval(interval);
+            delete preparationIntervals.current[fileId];
+            return { ...file, progress: 100, status: 'ready' };
+          }
+          return { ...file, progress, status: 'preparing' };
+        }
+        return file;
+      }));
+    }, 100); // 100ms마다 10%씩 증가 (총 1초)
+    
+    // interval 추적
+    preparationIntervals.current[fileId] = interval;
   };
 
   const handleDragOver = (e) => {
@@ -79,6 +109,11 @@ export default function UploadFile({ onClose }) {
   };
 
   const handleRemoveFile = (fileId) => {
+    // 파일 준비 interval 정리
+    if (preparationIntervals.current[fileId]) {
+      clearInterval(preparationIntervals.current[fileId]);
+      delete preparationIntervals.current[fileId];
+    }
     setFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
@@ -97,11 +132,6 @@ export default function UploadFile({ onClose }) {
       return;
     }
     
-    if (!jobField) {
-      setError('희망 직종을 선택해주세요.');
-      return;
-    }
-    
     // user_id 확인
     const userId = localStorage.getItem('user_id');
     if (!userId) {
@@ -112,61 +142,79 @@ export default function UploadFile({ onClose }) {
     // 여러 파일이 있으면 첫 번째 파일만 업로드 (백엔드가 단일 파일만 받음)
     const fileToUpload = files[0];
     
+    // 파일이 준비되지 않았으면 업로드 불가
+    if (fileToUpload.status !== 'ready' || fileToUpload.progress !== 100) {
+      setError('파일 준비가 완료되지 않았습니다. 잠시만 기다려주세요.');
+      return;
+    }
+    
+    // jobField가 없으면 localStorage에서 가져온 값 사용, 없으면 기본값 사용
+    const finalJobField = jobField || localStorage.getItem('user_job_field') || localStorage.getItem('desiredJob') || '기타';
+    
     setUploading(true);
     setFiles(prev => prev.map(file => 
       file.id === fileToUpload.id ? { ...file, status: 'uploading', progress: 0 } : file
     ));
     
     try {
-      // FormData 생성
+      // FormData 생성 (서버 API 형식에 맞게)
       const formData = new FormData();
       formData.append('user_id', userId);
-      formData.append('job_field', jobField);
+      formData.append('job_field', finalJobField);
       formData.append('resume_file', fileToUpload.file);
       
-      // XMLHttpRequest를 사용하여 진행률 추적
+      // XMLHttpRequest를 사용하여 업로드 진행률 추적
       const xhr = new XMLHttpRequest();
       
-      // 진행률 업데이트
+      // 업로드 진행률 추적
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
-          const progress = Math.round((e.loaded / e.total) * 100);
+          // 업로드 진행률을 0-90%로 설정 (나머지 10%는 서버 분석용)
+          const uploadProgress = Math.round((e.loaded / e.total) * 90);
           setFiles(prev => prev.map(file => 
-            file.id === fileToUpload.id ? { ...file, progress } : file
+            file.id === fileToUpload.id ? { ...file, progress: uploadProgress, status: 'uploading' } : file
           ));
         }
       });
       
-      // 업로드 완료 처리
+      // 응답 처리
       xhr.addEventListener('load', () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
+            // 업로드 완료 (90%)
+            setFiles(prev => prev.map(file => 
+              file.id === fileToUpload.id ? { ...file, progress: 90, status: 'uploading' } : file
+            ));
+            
+            // 로딩 모달 표시 (분석 중)
+            setShowLoadingModal(true);
+            
+            // 응답 데이터 파싱
             const data = JSON.parse(xhr.responseText);
             
-            // 업로드 성공
+            // 업로드 및 분석 완료 (100%)
             setFiles(prev => prev.map(file => 
               file.id === fileToUpload.id ? { ...file, status: 'completed', progress: 100 } : file
             ));
             
+            // 분석 결과 저장
+            setAnalysisResult(data);
+            
             // localStorage에 선택한 직종 저장 (다음 업로드 시 기본값으로 사용)
-            localStorage.setItem('desiredJob', jobField);
+            localStorage.setItem('desiredJob', finalJobField);
             
-            // 성공 메시지
-            alert('이력서 업로드가 완료되었습니다!');
-            
-            // 모달 닫기
-            if (onClose) {
-              onClose();
-            }
-            
-            // AiInterview 페이지로 이동
-            navigate('/interview');
+            // 로딩 모달 닫고 결과 모달 표시
+            setShowLoadingModal(false);
+            setShowResultModal(true);
+            setUploading(false);
           } catch (parseError) {
             console.error('Response parse error:', parseError);
-            setError('서버 응답을 처리할 수 없습니다.');
+            setError('응답 데이터를 파싱하는 중 오류가 발생했습니다.');
             setFiles(prev => prev.map(file => 
               file.id === fileToUpload.id ? { ...file, status: 'error' } : file
             ));
+            setUploading(false);
+            setShowLoadingModal(false);
           }
         } else {
           // 에러 응답 처리
@@ -179,20 +227,33 @@ export default function UploadFile({ onClose }) {
           setFiles(prev => prev.map(file => 
             file.id === fileToUpload.id ? { ...file, status: 'error' } : file
           ));
+          setUploading(false);
+          setShowLoadingModal(false);
         }
-        setUploading(false);
       });
       
       // 에러 처리
       xhr.addEventListener('error', () => {
-        setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('Upload error');
+        setError('업로드 중 오류가 발생했습니다.');
         setFiles(prev => prev.map(file => 
           file.id === fileToUpload.id ? { ...file, status: 'error' } : file
         ));
         setUploading(false);
+        setShowLoadingModal(false);
       });
       
-      // 업로드 시작
+      // 중단 처리
+      xhr.addEventListener('abort', () => {
+        setError('업로드가 취소되었습니다.');
+        setFiles(prev => prev.map(file => 
+          file.id === fileToUpload.id ? { ...file, status: 'error' } : file
+        ));
+        setUploading(false);
+        setShowLoadingModal(false);
+      });
+      
+      // 요청 전송
       xhr.open('POST', `${API_BASE_URL}/api/resume/upload`);
       xhr.send(formData);
       
@@ -203,6 +264,66 @@ export default function UploadFile({ onClose }) {
         file.id === fileToUpload.id ? { ...file, status: 'error' } : file
       ));
       setUploading(false);
+      setShowLoadingModal(false);
+    }
+  };
+
+  const handleResultConfirm = async () => {
+    setShowResultModal(false);
+    
+    // user_id 확인
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      setError('로그인이 필요합니다.');
+      return;
+    }
+    
+    // 질문 생성 로딩 모달 표시
+    setShowQuestionLoadingModal(true);
+    
+    try {
+      // 질문 생성 API 호출
+      const response = await fetch(`${API_BASE_URL}/api/question/generate?user_id=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        // 에러 응답 처리
+        try {
+          const errorData = await response.json();
+          setError(errorData.detail || errorData.message || '질문 생성에 실패했습니다.');
+        } catch {
+          setError('질문 생성에 실패했습니다.');
+        }
+        setShowQuestionLoadingModal(false);
+        return;
+      }
+      
+      // 응답 데이터 파싱 (QuestionListResponse 형식)
+      const questionData = await response.json();
+      
+      // 질문 리스트를 localStorage에 저장 (AiInterview 페이지에서 사용)
+      localStorage.setItem('interview_questions', JSON.stringify(questionData.question_list));
+      localStorage.setItem('analysis_summary', JSON.stringify(questionData.analysis_summary));
+      
+      // 질문 생성 완료
+      setShowQuestionLoadingModal(false);
+      
+      // 모달 닫기
+      if (onClose) {
+        onClose();
+      }
+      
+      // AiInterview 페이지로 이동
+      navigate('/interview');
+      
+    } catch (err) {
+      console.error('Question generation error:', err);
+      setError('질문 생성 중 오류가 발생했습니다.');
+      setShowQuestionLoadingModal(false);
     }
   };
 
@@ -236,7 +357,7 @@ export default function UploadFile({ onClose }) {
         </div>
       )}
 
-      {/* <div style={{ padding: '0 20px', marginBottom: '20px' }}>
+      <div style={{ padding: '0 20px', marginBottom: '20px' }}>
         <label htmlFor="job-field" style={{
           display: 'block',
           fontSize: '.9rem',
@@ -269,7 +390,7 @@ export default function UploadFile({ onClose }) {
           <option value="경영지원/회계">경영지원/회계</option>
           <option value="기타">기타</option>
         </select>
-      </div> */}
+      </div>
 
       <div
         className={`upload-file-dropzone ${isDragging ? 'dragging' : ''}`}
@@ -341,6 +462,9 @@ export default function UploadFile({ onClose }) {
                 <span className="upload-file-progress-text">
                   {file.status === 'error' ? '업로드 실패' : 
                    file.status === 'completed' ? '완료' : 
+                   file.status === 'ready' ? '준비 완료' :
+                   file.status === 'uploading' ? `${file.progress}%` :
+                   file.status === 'preparing' ? `준비 중... ${file.progress}%` :
                    `${file.progress}%`}
                 </span>
               </div>
@@ -360,15 +484,212 @@ export default function UploadFile({ onClose }) {
         <button 
           className="btn btn-primary" 
           onClick={handleCreated}
-          disabled={uploading || files.length === 0 || !jobField}
+          disabled={uploading || files.length === 0 || (files.length > 0 && (files[0].status !== 'ready' || files[0].progress !== 100))}
           style={{ 
-            opacity: (uploading || files.length === 0 || !jobField) ? 0.6 : 1,
-            cursor: (uploading || files.length === 0 || !jobField) ? 'not-allowed' : 'pointer'
+            opacity: (uploading || files.length === 0 || (files.length > 0 && (files[0].status !== 'ready' || files[0].progress !== 100))) ? 0.6 : 1,
+            cursor: (uploading || files.length === 0 || (files.length > 0 && (files[0].status !== 'ready' || files[0].progress !== 100))) ? 'not-allowed' : 'pointer'
           }}
         >
-          {uploading ? '업로드 중...' : '업로드'}
+          {uploading ? '업로드 중...' : 
+           files.length > 0 && files[0].status === 'preparing' ? '준비 중...' : 
+           '업로드'}
         </button>
       </div>
+
+      {/* 이력서 분석 로딩 모달 */}
+      {showLoadingModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '40px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #6C63FF',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 20px'
+            }}></div>
+            <h3 style={{
+              margin: '0 0 10px',
+              fontSize: '1.25rem',
+              fontWeight: 600,
+              color: '#333'
+            }}>이력서 분석 중...</h3>
+            <p style={{
+              margin: 0,
+              color: '#666',
+              fontSize: '0.95rem'
+            }}>잠시만 기다려주세요. AI가 이력서를 분석하고 있습니다.</p>
+          </div>
+        </div>
+      )}
+
+      {/* 질문 생성 로딩 모달 */}
+      {showQuestionLoadingModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '40px',
+            maxWidth: '400px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #6C63FF',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 20px'
+            }}></div>
+            <h3 style={{
+              margin: '0 0 10px',
+              fontSize: '1.25rem',
+              fontWeight: 600,
+              color: '#333'
+            }}>맞춤 질문 생성 중...</h3>
+            <p style={{
+              margin: 0,
+              color: '#666',
+              fontSize: '0.95rem'
+            }}>이력서를 바탕으로 맞춤형 면접 질문을 생성하고 있습니다.</p>
+          </div>
+        </div>
+      )}
+
+      {/* 결과 모달 */}
+      {showResultModal && analysisResult && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '40px',
+            maxWidth: '500px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              backgroundColor: '#4caf50',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px'
+            }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <h3 style={{
+              margin: '0 0 15px',
+              fontSize: '1.5rem',
+              fontWeight: 600,
+              color: '#333'
+            }}>이력서 분석 완료!</h3>
+            <div style={{
+              margin: '20px 0',
+              padding: '20px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              textAlign: 'left'
+            }}>
+              <p style={{
+                margin: '0 0 10px',
+                fontSize: '0.9rem',
+                color: '#666',
+                fontWeight: 500
+              }}>직종: <span style={{ color: '#333' }}>{analysisResult.job_field}</span></p>
+              <p style={{
+                margin: '10px 0 0',
+                fontSize: '0.9rem',
+                color: '#666',
+                fontWeight: 500
+              }}>분석 키워드:</p>
+              <p style={{
+                margin: '5px 0 0',
+                fontSize: '1rem',
+                color: '#6C63FF',
+                fontWeight: 500,
+                lineHeight: '1.6'
+              }}>{analysisResult.analysis_keywords}</p>
+            </div>
+            <button
+              onClick={handleResultConfirm}
+              style={{
+                marginTop: '20px',
+                padding: '12px 32px',
+                backgroundColor: '#6C63FF',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '1rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseOver={(e) => e.target.style.backgroundColor = '#5a52d5'}
+              onMouseOut={(e) => e.target.style.backgroundColor = '#6C63FF'}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 로딩 애니메이션 스타일 */}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

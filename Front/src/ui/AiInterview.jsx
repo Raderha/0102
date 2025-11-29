@@ -1,13 +1,31 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function AiInterview() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  const question = "동기 처리와 비동기 처리의 차이점은 무엇인가요?";
+  // localStorage에서 질문 리스트 가져오기
+  useEffect(() => {
+    const savedQuestions = localStorage.getItem('interview_questions');
+    if (savedQuestions) {
+      try {
+        const parsedQuestions = JSON.parse(savedQuestions);
+        setQuestions(parsedQuestions);
+      } catch (err) {
+        console.error('Failed to parse questions:', err);
+      }
+    }
+  }, []);
+
+  // 현재 질문 (질문 리스트가 있으면 첫 번째 질문, 없으면 기본 메시지)
+  const question = questions.length > 0 
+    ? questions[currentQuestionIndex] 
+    : "질문을 생성하기 위해 먼저 이력서를 업로드해주세요.";
 
   const handleFileSelect = () => {
     fileInputRef.current?.click();
@@ -67,7 +85,83 @@ export default function AiInterview() {
             <h2 style={styles.sectionTitle}>면접 질문</h2>
           </div>
           <div style={styles.questionBox}>
-            <p style={styles.questionText}>{question}</p>
+            {questions.length > 0 ? (
+              <>
+                <p style={styles.questionText}>{question}</p>
+                {questions.length > 1 && (
+                  <div style={{
+                    marginTop: '20px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: '20px',
+                    borderTop: `1px solid ${theme.border}`
+                  }}>
+                    <span style={{
+                      fontSize: '0.9rem',
+                      color: theme.textLight
+                    }}>
+                      질문 {currentQuestionIndex + 1} / {questions.length}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                        disabled={currentQuestionIndex === 0}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: `1px solid ${theme.border}`,
+                          backgroundColor: currentQuestionIndex === 0 ? theme.background : theme.white,
+                          color: currentQuestionIndex === 0 ? theme.textLight : theme.textDark,
+                          cursor: currentQuestionIndex === 0 ? 'not-allowed' : 'pointer',
+                          fontSize: '0.9rem',
+                          fontWeight: 500
+                        }}
+                      >
+                        이전
+                      </button>
+                      <button
+                        onClick={() => setCurrentQuestionIndex(prev => Math.min(questions.length - 1, prev + 1))}
+                        disabled={currentQuestionIndex === questions.length - 1}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: `1px solid ${theme.border}`,
+                          backgroundColor: currentQuestionIndex === questions.length - 1 ? theme.background : theme.white,
+                          color: currentQuestionIndex === questions.length - 1 ? theme.textLight : theme.textDark,
+                          cursor: currentQuestionIndex === questions.length - 1 ? 'not-allowed' : 'pointer',
+                          fontSize: '0.9rem',
+                          fontWeight: 500
+                        }}
+                      >
+                        다음
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: theme.textLight
+              }}>
+                <p style={{
+                  fontSize: '1.1rem',
+                  margin: '0 0 10px',
+                  color: theme.textLight
+                }}>
+                  질문이 아직 생성되지 않았습니다.
+                </p>
+                <p style={{
+                  fontSize: '0.95rem',
+                  margin: 0,
+                  color: theme.textLight
+                }}>
+                  이력서를 업로드하고 분석을 완료하면 맞춤형 면접 질문이 생성됩니다.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -144,11 +238,11 @@ export default function AiInterview() {
       <div style={styles.footer}>
         <button
           onClick={handleSubmit}
-          disabled={!selectedFile || isSubmitting}
+          disabled={!selectedFile || isSubmitting || questions.length === 0}
           style={{
             ...styles.submitButton,
-            opacity: (!selectedFile || isSubmitting) ? 0.6 : 1,
-            cursor: (!selectedFile || isSubmitting) ? 'not-allowed' : 'pointer',
+            opacity: (!selectedFile || isSubmitting || questions.length === 0) ? 0.6 : 1,
+            cursor: (!selectedFile || isSubmitting || questions.length === 0) ? 'not-allowed' : 'pointer',
           }}
         >
           {isSubmitting ? (
