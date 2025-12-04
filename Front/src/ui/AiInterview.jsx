@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+// 백엔드 API URL
+const API_BASE_URL = 'https://jobready-backend-282796839955.asia-northeast3.run.app';
+
 export default function AiInterview() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showLoadingModal, setShowLoadingModal] = useState(false);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
@@ -22,6 +26,25 @@ export default function AiInterview() {
     }
   }, []);
 
+  // CSS 애니메이션 추가
+  useEffect(() => {
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(styleSheet);
+    
+    return () => {
+      // 컴포넌트 언마운트 시 스타일 제거
+      if (document.head.contains(styleSheet)) {
+        document.head.removeChild(styleSheet);
+      }
+    };
+  }, []);
+
   // 현재 질문 (질문 리스트가 있으면 첫 번째 질문, 없으면 기본 메시지)
   const question = questions.length > 0 
     ? questions[currentQuestionIndex] 
@@ -34,13 +57,13 @@ export default function AiInterview() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // 오디오 파일만 허용 (mp3, wav, m4a, ogg)
-      const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/ogg', 'audio/m4a'];
+      // 오디오 파일만 허용 (mp3, wav, m4a, ogg, webm)
+      const allowedTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'audio/ogg', 'audio/m4a', 'audio/webm', 'video/webm'];
       const fileExtension = file.name.split('.').pop().toLowerCase();
-      const allowedExtensions = ['mp3', 'wav', 'm4a', 'ogg'];
+      const allowedExtensions = ['mp3', 'wav', 'm4a', 'ogg', 'webm'];
       
       if (!allowedExtensions.includes(fileExtension)) {
-        alert('지원되는 파일 형식: .mp3, .wav, .m4a, .ogg');
+        alert('지원되는 파일 형식: .mp3, .wav, .m4a, .ogg, .webm');
         return;
       }
       
@@ -48,19 +71,72 @@ export default function AiInterview() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedFile) {
       alert('답변 파일을 선택해주세요.');
       return;
     }
 
+    if (questions.length === 0) {
+      alert('질문이 없습니다.');
+      return;
+    }
+
+    // user_id 확인
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    // question_index 확인
+    if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) {
+      alert('질문 인덱스가 유효하지 않습니다.');
+      return;
+    }
+
     setIsSubmitting(true);
-    
-    // 테스트용: 바로 ScoreBoard로 이동
-    // TODO: 나중에 서버 연동 후 음성파일 분석 처리 추가
-    setTimeout(() => {
+    setShowLoadingModal(true);
+
+    try {
+      // FormData 생성
+      const formData = new FormData();
+      formData.append('question_index', currentQuestionIndex.toString());
+      formData.append('audio_file', selectedFile);
+      formData.append('user_id', userId);
+
+      // API 호출
+      const response = await fetch(`${API_BASE_URL}/api/interview/analyze`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.message || '면접 분석에 실패했습니다.');
+      }
+
+      const data = await response.json();
+      
+      // 서버로부터 받은 데이터를 콘솔에 출력
+      console.log('서버 응답 데이터:', data);
+
+      // 응답 데이터를 localStorage에 저장 (ScoreBoard에서 사용)
+      localStorage.setItem('interview_analysis_result', JSON.stringify(data));
+
+      // 로딩 모달 닫기
+      setShowLoadingModal(false);
+      setIsSubmitting(false);
+
+      // ScoreBoard로 이동
       navigate('/scoreboard');
-    }, 500);
+
+    } catch (error) {
+      console.error('면접 분석 오류:', error);
+      alert(error.message || '면접 분석 중 오류가 발생했습니다.');
+      setShowLoadingModal(false);
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -195,7 +271,7 @@ export default function AiInterview() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="audio/*,.mp3,.wav,.m4a,.ogg"
+                accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm"
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
@@ -264,6 +340,23 @@ export default function AiInterview() {
           )}
         </button>
       </div>
+
+      {/* 로딩 모달 */}
+      {showLoadingModal && (
+        <div style={styles.loadingModal}>
+          <div style={styles.loadingModalContent}>
+            <div style={styles.loadingSpinner}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+            </div>
+            <h3 style={styles.loadingTitle}>면접 분석 중...</h3>
+            <p style={styles.loadingText}>음성 파일을 분석하고 피드백을 생성하고 있습니다.</p>
+            <p style={styles.loadingSubtext}>잠시만 기다려주세요.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -464,6 +557,50 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.2s',
     boxShadow: '0 4px 12px rgba(108, 99, 255, 0.3)',
+  },
+  loadingModal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  loadingModalContent: {
+    backgroundColor: theme.white,
+    borderRadius: '16px',
+    padding: '40px',
+    maxWidth: '400px',
+    width: '90%',
+    textAlign: 'center',
+    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+  },
+  loadingSpinner: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: '24px',
+    color: theme.primary,
+  },
+  loadingTitle: {
+    fontSize: '1.5rem',
+    fontWeight: 600,
+    color: theme.textDark,
+    margin: '0 0 12px 0',
+  },
+  loadingText: {
+    fontSize: '1rem',
+    color: theme.textLight,
+    margin: '0 0 8px 0',
+    lineHeight: 1.6,
+  },
+  loadingSubtext: {
+    fontSize: '0.9rem',
+    color: theme.textLight,
+    margin: 0,
   },
 };
 

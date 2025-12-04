@@ -13,19 +13,66 @@ router = APIRouter(prefix="/api/interview", tags=["interview"])
 
 @router.post("/analyze", response_model=InterviewAnalysisResponse)
 async def analyze_interview(
-    question: str = Form(...), 
+    question_index: int = Form(...), 
     audio_file: UploadFile = File(...),
     user_id: str = Form("default_user") 
 ):
     """
-    면접 질문과 음성 답변을 받아 Gemini로 분석 피드백을 받고 Firestore에 저장합니다.
+    면접 질문 인덱스와 음성 답변을 받아 Gemini로 분석 피드백을 받고 Firestore에 저장합니다.
     """
     
-    # 1. STT 결과 처리 (Mock STT 함수 호출)
+    # 1. 질문 리스트 가져오기 (질문 생성 API와 동일한 로직 사용)
+    firestore_db = get_firestore_db()
+    if not firestore_db:
+        raise HTTPException(status_code=500, detail="DB 서비스가 초기화되지 않았습니다.")
+    
+    try:
+        # Firestore에서 최신 이력서 및 사용자 정보 로드
+        resume_query = firestore_db.collection("users").document(user_id).collection("resumes").order_by("uploaded_at", direction=firestore.Query.DESCENDING).limit(1).get()
+        user_doc_ref = firestore_db.collection("users").document(user_id).get()
+        
+        if not user_doc_ref.exists:
+            raise HTTPException(status_code=404, detail="사용자 정보를 찾을 수 없습니다.")
+        
+        user_doc = user_doc_ref.to_dict()
+        
+        if not resume_query:
+            raise HTTPException(status_code=404, detail="업로드된 이력서가 없습니다. 먼저 이력서를 업로드하세요.")
+
+        latest_resume = resume_query[0].to_dict()
+        job_field = user_doc.get("desiredJob", "소프트웨어 엔지니어")
+        keywords = latest_resume.get("analysis_keywords", "경험")
+
+        # Gemini를 이용한 맞춤 질문 리스트 생성
+        question_prompt = f"""
+        당신은 전문 면접 출제자입니다. 다음 키워드와 직종을 기반으로 구직자에게 질문할 면접 질문 5개를 생성하세요.
+        - 직종: {job_field}
+        - 핵심 키워드: {keywords}
+        
+        질문은 반드시 다음 JSON 형식의 Python list[str] 형태의 문자열로만 응답해야 합니다.
+        ["질문 1", "질문 2", "질문 3", "질문 4", "질문 5"]
+        """
+        
+        response_text = gemini_service.generate_content(question_prompt, response_mime_type="application/json")
+        question_list = json.loads(response_text)
+        
+        # question_index로 질문 가져오기
+        if question_index < 0 or question_index >= len(question_list):
+            raise HTTPException(status_code=400, detail=f"질문 인덱스가 유효하지 않습니다. (0~{len(question_list)-1} 범위)")
+        
+        question = question_list[question_index]
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"질문 조회 중 오류 발생: {type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"질문 조회 중 오류 발생: {str(e)}")
+    
+    # 2. STT 결과 처리 (Mock STT 함수 호출)
     mock_stt_response = await stt_service.analyze_speech_mock(audio_file)
     transcribed_text = mock_stt_response.transcribed_text
     
-    # 2. Gemini API 호출을 위한 프롬프트 정의
+    # 3. Gemini API 호출을 위한 프롬프트 정의
     system_prompt = f"""
     당신은 IT 기업의 소프트웨어 엔지니어링 면접관입니다.
     다음 질문과 (가상의) 구직자 답변을 분석하고, 한국어로 구체적인 피드백을 JSON 형식으로만 출력하세요.
@@ -51,8 +98,7 @@ async def analyze_interview(
         raw_feedback_data = json.loads(json_string)
         feedback_model = Feedback(**raw_feedback_data)
         
-        # 3. Firestore에 결과 저장
-        firestore_db = get_firestore_db()
+        # 4. Firestore에 결과 저장
         timestamp = datetime.now().isoformat()
         record_data = {
             "question": question,

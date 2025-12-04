@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import './ScoreBoard.css'
 
 function ScoreBoard() {
-  const [totalScore, setTotalScore] = useState(4.2) // 5점 만점 종합 점수
-  const [questionScore, setQuestionScore] = useState(4.0) // 질문 답변 점수
-  const [resumeScore, setResumeScore] = useState(4.4) // 이력서 점수
+  const [totalScore, setTotalScore] = useState(0) // 5점 만점 종합 점수
+  const [questionScore, setQuestionScore] = useState(0) // 질문 답변 점수 (relevance_score)
+  const [resumeScore, setResumeScore] = useState(0) // 이력서 점수 (logic_score)
   const [transcribedText, setTranscribedText] = useState('')
   const [feedback, setFeedback] = useState('')
 
@@ -15,10 +15,45 @@ function ScoreBoard() {
   const strokeDashoffset = circumference - (scorePercentage / 100) * circumference
 
   useEffect(() => {
-    // 실제 데이터는 API에서 가져올 수 있습니다
-    // 예시 데이터
-    setTranscribedText('질문에 대한 답변 음성 파일이 텍스트로 변환된 내용이 여기에 표시됩니다...')
-    setFeedback('답변에 대한 피드백이 여기에 표시됩니다. 강점과 개선점에 대한 상세한 분석이 제공됩니다...')
+    // localStorage에서 면접 분석 결과 가져오기
+    const analysisResult = localStorage.getItem('interview_analysis_result');
+    
+    if (analysisResult) {
+      try {
+        const data = JSON.parse(analysisResult);
+        
+        // transcribed_text 설정
+        if (data.transcribed_text) {
+          setTranscribedText(data.transcribed_text);
+        }
+        
+        // feedback 설정
+        if (data.feedback) {
+          const feedbackText = data.feedback.improvement_advice || '';
+          setFeedback(feedbackText);
+          
+          // 점수 설정
+          const relevanceScore = data.feedback.relevance_score || 0;
+          const logicScore = data.feedback.logic_score || 0;
+          
+          setQuestionScore(relevanceScore);
+          setResumeScore(logicScore);
+          
+          // 종합 점수 계산 (relevance_score와 logic_score의 평균)
+          const avgScore = (relevanceScore + logicScore) / 2;
+          setTotalScore(avgScore);
+        }
+      } catch (error) {
+        console.error('면접 분석 결과 파싱 오류:', error);
+        // 기본값 유지
+        setTranscribedText('질문에 대한 답변 음성 파일이 텍스트로 변환된 내용이 여기에 표시됩니다...');
+        setFeedback('답변에 대한 피드백이 여기에 표시됩니다. 강점과 개선점에 대한 상세한 분석이 제공됩니다...');
+      }
+    } else {
+      // 데이터가 없을 경우 기본값
+      setTranscribedText('질문에 대한 답변 음성 파일이 텍스트로 변환된 내용이 여기에 표시됩니다...');
+      setFeedback('답변에 대한 피드백이 여기에 표시됩니다. 강점과 개선점에 대한 상세한 분석이 제공됩니다...');
+    }
   }, [])
 
   return (
@@ -29,22 +64,22 @@ function ScoreBoard() {
 
       {/* 상단 카드들 - 일렬 배치 */}
       <div className="top-cards-row">
-        {/* 빨간색 카드 */}
+        {/* 빨간색 카드 - Relevance Score */}
         <div className="stat-card red-card">
           <div className="card-content">
-            <h3 className="card-title">이력서 오탈자 수</h3>
-            <div className="card-value">{questionScore.toFixed(1)} 개</div>
-            <p className="card-subtitle">이력서에 있는 총 오탈자,문법 오류의 수 입니다.</p>
+            <h3 className="card-title">Relevance Score</h3>
+            <div className="card-value">{questionScore.toFixed(1)} / 5.0</div>
+            <p className="card-subtitle">답변의 질문 관련성 점수입니다. (1~5점)</p>
           </div>
           <div className="card-icon">📝</div>
         </div>
 
-        {/* 보라색 카드 */}
+        {/* 보라색 카드 - Logic Score */}
         <div className="stat-card purple-card">
           <div className="card-content">
-            <h3 className="card-title">Filler Words 수</h3>
-            <div className="card-value">{resumeScore.toFixed(1)} 개</div>
-            <p className="card-subtitle">Filler Words : “Well…”, “음…”, “어…” <br /><br /> 필러 워즈의 빈도 수를 나타냅니다</p>
+            <h3 className="card-title">Logic Score</h3>
+            <div className="card-value">{resumeScore.toFixed(1)} / 5.0</div>
+            <p className="card-subtitle">답변의 논리성 점수입니다. (1~5점)</p>
           </div>
           <div className="card-icon">📄</div>
         </div>
@@ -91,11 +126,11 @@ function ScoreBoard() {
           <div className="chart-legend">
             <div className="legend-item">
               <span className="legend-dot purple-dot"></span>
-              <span>Questions: {questionScore.toFixed(1)}</span>
+              <span>Relevance: {questionScore.toFixed(1)}</span>
             </div>
             <div className="legend-item">
               <span className="legend-dot blue-dot"></span>
-              <span>Resume: {resumeScore.toFixed(1)}</span>
+              <span>Logic: {resumeScore.toFixed(1)}</span>
             </div>
           </div>
         </div>
