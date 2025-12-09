@@ -3,31 +3,26 @@ import NavBar from '../ui/NavBar.jsx';
 import Footer from '../ui/Footer.jsx';
 import CommunityFilter from '../ui/CommunityFilter.jsx';
 import CommunityList from '../ui/CommunityList.jsx';
+import axios from "axios";
 
 export default function Community() {
   const [selectedJob, setSelectedJob] = useState('');
   const [communityData, setCommunityData] = useState([]);
 
   useEffect(() => {
-    const mockData = [
-      {
-        id: 1,
-        jobCode: 'WD',
-        question: "What is React?",
-        answerText: "React is a UI library for building web apps.",
-        score: 85
-      },
-      {
-        id: 2,
-        jobCode: 'DS',
-        question: "Explain overfitting.",
-        answerText: "Overfitting happens when a model memorizes training data.",
-        score: 92
-      },
-    ];
+  const fetchPosts = async () => {
+    try {
+      const res = await axios.get("https://jobready-backend-282796839955.asia-northeast3.run.app");
+      console.log("서버에서 받은 데이터:", res.data);
+      setCommunityData(res.data);
+    } catch (error) {
+      console.error("게시글 불러오기 실패:", error);
+    }
+  };
 
-    setCommunityData(mockData);
-  }, []);
+  fetchPosts();
+}, []);
+
 
   return (
     <div className="page">

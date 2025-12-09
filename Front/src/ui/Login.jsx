@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
-// 백엔드 API URL (환경 변수로 관리하는 것이 좋지만, 일단 하드코딩)
-const API_BASE_URL = 'https://jobready-backend-282796839955.asia-northeast3.run.app';
+// 백엔드 API URL (환경 변수에서 가져오기)
+// 개발 환경에서는 프록시를 사용하므로 빈 문자열, 프로덕션에서는 전체 URL 사용
+const API_BASE_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || 'https://jobready-backend-282796839955.asia-northeast3.run.app');
 
 export default function Login({ onClose, onOpenRegister, onOpenFindPW }) {
   const [email, setEmail] = useState('');

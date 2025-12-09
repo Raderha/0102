@@ -1,7 +1,90 @@
-import React from 'react';
+import React, { useState, useEffect } from "react";
+import axios from "axios"; 
 import './MyPage.css';
 
 export default function MyPageComponent() {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [encouragementMessage, setEncouragementMessage] = useState("");
+  const [userInfo, setUserInfo] = useState(null);  
+  const userId = localStorage.getItem("user_id");  
+  // 백엔드 API URL (환경 변수에서 가져오기)
+  // 개발 환경에서는 프록시를 사용하므로 빈 문자열, 프로덕션에서는 전체 URL 사용
+  const API_BASE_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_BASE_URL || 'https://jobready-backend-282796839955.asia-northeast3.run.app');
+
+
+  const encouragementMessages = [
+    "잘 하고 계세요! 지금처럼 훌륭하게 계속해 주세요!",
+    "아무리 작은 것이라도, 앞으로 나아가는 모든 발걸음이 발전입니다.",
+    "자신과 당신의 모든 것을 믿으세요. 당신은 해낼 수 있습니다!",
+    "성공은 끝이 아니며, 실패는 치명적이지 않습니다. 중요한 것은 계속하려는 용기입니다.",
+    "위대한 일을 하는 유일한 방법은 당신이 하는 일을 사랑하는 것입니다.",
+    "당신의 노력과 헌신은 분명히 성과를 낼 것입니다.",
+    "시계를 쳐다보지 마세요. 시계처럼 움직이세요. 계속 나아가세요.",
+    "미래는 자신의 꿈의 아름다움을 믿는 사람들의 것입니다.",
+    "당신은 놀라운 일들을 해낼 능력이 있습니다!",
+    "집중력을 유지하고 꿈을 포기하지 마세요."
+  ];
+
+  useEffect(() => {
+    // 페이지 로드 시 랜덤 격려 문구 설정
+    const randomIndex = Math.floor(Math.random() * encouragementMessages.length);
+    setEncouragementMessage(encouragementMessages[randomIndex]);
+  }, []); 
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/users/${userId}/stats`);
+        setUserInfo(res.data);
+      } catch (error) {
+        console.error("마이페이지 로딩 실패:", error);
+      }
+    };
+
+  fetchUserData();
+}, [userId]);
+
+
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth();
+  const today = new Date(); // 오늘 날짜를 위한 Date 객체
+
+  const startDate = new Date(currentYear, currentMonth, 1);
+  const endDate = new Date(currentYear, currentMonth + 1, 0);
+
+  let calendarDays = [];
+  const startDay = startDate.getDay();
+  const endDay = endDate.getDate();
+
+  // 이전달 빈 칸
+  for (let i = 0; i < startDay; i++) {
+    calendarDays.push({ date: "", isCurrentMonth: false, isToday: false });
+  }
+
+  // 이번달 날짜
+  for (let i = 1; i <= endDay; i++) {
+    const isToday =
+      currentYear === today.getFullYear() &&
+      currentMonth === today.getMonth() &&
+      i === today.getDate();
+    calendarDays.push({ date: i, isCurrentMonth: true, isToday: isToday });
+  }
+
+  // 다음달 빈 칸
+  while (calendarDays.length % 7 !== 0) {
+    calendarDays.push({ date: "", isCurrentMonth: false, isToday: false });
+  }
+
+  const prevMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+  };
+
+  if (!userInfo) return <div>Loading...</div>;
+
   return (
     <div className="mypage-container">
       <div className="mypage-header">
@@ -20,8 +103,8 @@ export default function MyPageComponent() {
             </svg>
           </div>
           <div className="mypage-kpi-content">
-            <div className="mypage-kpi-number">1259</div>
-            <div className="mypage-kpi-label">Total Employees</div>
+            <div className="mypage-kpi-number">{userInfo.total_questions}</div> 
+            <div className="mypage-kpi-label">Total Questions</div>
           </div>
         </div>
 
@@ -33,8 +116,8 @@ export default function MyPageComponent() {
             </svg>
           </div>
           <div className="mypage-kpi-content">
-            <div className="mypage-kpi-number">23</div>
-            <div className="mypage-kpi-label">Job Opening</div>
+            <div className="mypage-kpi-number">{userInfo.total_score}</div>
+            <div className="mypage-kpi-label">Total Socre</div>
           </div>
         </div>
 
@@ -48,15 +131,15 @@ export default function MyPageComponent() {
             </svg>
           </div>
           <div className="mypage-kpi-content">
-            <div className="mypage-kpi-number">123</div>
-            <div className="mypage-kpi-label">New Applicant</div>
+            <div className="mypage-kpi-number">{userInfo.submitted_reports}</div>
+            <div className="mypage-kpi-label">Submited Reports</div>
           </div>
         </div>
 
         <div className="mypage-kpi-card mypage-kpi-card-event">
           <div className="mypage-kpi-content">
-            <div className="mypage-event-title">Upcoming Company Event</div>
-            <div className="mypage-event-subtitle">Watch a thriller</div>
+            <div className="mypage-event-title">IT developer</div>
+            <div className="mypage-event-subtitle">Job</div>
           </div>
           <div className="mypage-event-circle"></div>
         </div>
@@ -64,49 +147,50 @@ export default function MyPageComponent() {
 
       {/* Charts Section */}
       <div className="mypage-charts-grid">
-        {/* Visitor Statistics */}
+        {/* Visitor Statistics (첫 번째 카드 그대로) */}
         <div className="mypage-chart-card">
           <div className="mypage-chart-header">
             <h3 className="mypage-chart-title">Visitor statistics</h3>
             <div className="mypage-chart-date">Nov - July</div>
           </div>
+
           <div className="mypage-line-chart">
             <svg width="100%" height="200" viewBox="0 0 400 200" preserveAspectRatio="none">
+              
               {/* Grid lines */}
               <line x1="40" y1="20" x2="40" y2="180" stroke="#e5e7ef" strokeWidth="1"/>
               <line x1="40" y1="180" x2="360" y2="180" stroke="#e5e7ef" strokeWidth="1"/>
-              
+
               {/* Y-axis labels */}
               <text x="35" y="185" fontSize="10" fill="#525f7a" textAnchor="end">0</text>
               <text x="35" y="145" fontSize="10" fill="#525f7a" textAnchor="end">25</text>
               <text x="35" y="105" fontSize="10" fill="#525f7a" textAnchor="end">50</text>
               <text x="35" y="65" fontSize="10" fill="#525f7a" textAnchor="end">100</text>
-              
-              {/* X-axis labels */}
-              <text x="80" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Dec</text>
-              <text x="120" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Jan</text>
-              <text x="160" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Feb</text>
-              <text x="200" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Mar</text>
-              <text x="240" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Apr</text>
-              <text x="280" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">May</text>
-              <text x="320" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Jun</text>
-              
+
+              {/* X-axis labels (정렬 개선됨) */}
+              <text x="90" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Interruption</text>
+              <text x="150" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Filler</text>
+              <text x="210" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Keyword</text>
+              <text x="270" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">WPM</text>
+              <text x="330" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Repetition</text>
+
               {/* Previous line (green) */}
               <polyline
-                points="80,140 120,130 160,120 200,100 240,110 280,105 320,90"
+                points="90,140 150,130 210,120 270,100 330,110"
                 fill="none"
                 stroke="#10b981"
                 strokeWidth="2"
               />
-              
+
               {/* Last 6 months line (blue) */}
               <polyline
-                points="80,100 120,60 160,70 200,50 240,80 280,90 320,70"
+                points="90,100 150,60 210,70 270,50 330,80"
                 fill="none"
                 stroke="#5b5ce2"
                 strokeWidth="2"
               />
             </svg>
+
             <div className="mypage-chart-legend">
               <div className="mypage-legend-item">
                 <span className="mypage-legend-dot mypage-legend-dot-blue"></span>
@@ -122,123 +206,42 @@ export default function MyPageComponent() {
           </div>
         </div>
 
-        {/* Tasks */}
         <div className="mypage-chart-card">
           <div className="mypage-chart-header">
-            <h3 className="mypage-chart-title">Tasks</h3>
-            <div className="mypage-chart-dropdown">
-              <span>Show: This month</span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
+            <h3 className="mypage-chart-title">Interview Calendar</h3>
           </div>
-          <div className="mypage-donut-chart">
-            <svg width="200" height="200" viewBox="0 0 200 200">
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#e5e7ef"
-                strokeWidth="20"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="20"
-                strokeDasharray={`${2 * Math.PI * 80 * 0.6} ${2 * Math.PI * 80}`}
-                strokeDashoffset={-2 * Math.PI * 80 * 0.25}
-                transform="rotate(-90 100 100)"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#f59e0b"
-                strokeWidth="20"
-                strokeDasharray={`${2 * Math.PI * 80 * 0.2} ${2 * Math.PI * 80}`}
-                strokeDashoffset={-2 * Math.PI * 80 * 0.45}
-                transform="rotate(-90 100 100)"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="80"
-                fill="none"
-                stroke="#ef4444"
-                strokeWidth="20"
-                strokeDasharray={`${2 * Math.PI * 80 * 0.2} ${2 * Math.PI * 80}`}
-                strokeDashoffset={-2 * Math.PI * 80 * 0.65}
-                transform="rotate(-90 100 100)"
-              />
-              <text x="100" y="100" textAnchor="middle" dominantBaseline="middle" fontSize="32" fontWeight="700" fill="#10b981">60%</text>
-            </svg>
-            <div className="mypage-donut-legend">
-              <div className="mypage-legend-item">
-                <span className="mypage-legend-dot mypage-legend-dot-orange"></span>
-                <span className="mypage-legend-label">Active</span>
-              </div>
-              <div className="mypage-legend-item">
-                <span className="mypage-legend-dot mypage-legend-dot-green"></span>
-                <span className="mypage-legend-label">Completed</span>
-              </div>
-              <div className="mypage-legend-item">
-                <span className="mypage-legend-dot mypage-legend-dot-red"></span>
-                <span className="mypage-legend-label">Ended</span>
-              </div>
+          <div className="calendar-container">
+            <div className="calendar-header">
+              <button onClick={prevMonth}>&lt;</button>
+              <div>{currentYear}년 {currentMonth + 1}월</div>
+              <button onClick={nextMonth}>&gt;</button>
+            </div>
+
+            <div className="calendar-grid">
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                <div key={d} className="calendar-day-header">{d}</div>
+              ))}
+
+              {calendarDays.map((day, index) => (
+                <div
+                  key={index}
+                  className={`calendar-day ${day.isCurrentMonth ? "" : "other-month"} ${day.isToday ? "today" : ""}`}
+                >
+                  {day.date}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Invite to Office Meet-up */}
+      {/* 격려 문구 카드: 문구만 남기고 정리됨 */}
       <div className="mypage-task-card">
         <div className="mypage-task-content">
-          <h3 className="mypage-task-title">Invite to office meet-up</h3>
-          <div className="mypage-task-due">Due date: December 23, 2018</div>
-          <div className="mypage-task-participant">
-            <div className="mypage-avatar">
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                <circle cx="16" cy="16" r="16" fill="#e5e7ef"/>
-                <path d="M16 10C17.6569 10 19 11.3431 19 13C19 14.6569 17.6569 16 16 16C14.3431 16 13 14.6569 13 13C13 11.3431 14.3431 10 16 10Z" fill="#525f7a"/>
-                <path d="M16 18C18.7614 18 21 20.2386 21 23V24H11V23C11 20.2386 13.2386 18 16 18Z" fill="#525f7a"/>
-              </svg>
-            </div>
-            <span className="mypage-participant-name">Rebecca Moore</span>
-          </div>
+          <h3 className="mypage-task-title">{encouragementMessage}</h3> 
         </div>
-        <div className="mypage-task-actions">
-          <button className="mypage-action-btn">Call</button>
-          <div className="mypage-status-dots">
-            <span className="mypage-status-dot mypage-status-dot-orange"></span>
-            <span className="mypage-status-dot mypage-status-dot-green"></span>
-            <span className="mypage-status-dot mypage-status-dot-white"></span>
-          </div>
-          <button className="mypage-icon-btn">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M11.3333 1.33333H4.66667C3.74619 1.33333 3 2.07952 3 3V13C3 13.9205 3.74619 14.6667 4.66667 14.6667H11.3333C12.2538 14.6667 13 13.9205 13 13V3C13 2.07952 12.2538 1.33333 11.3333 1.33333Z" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 4.66667H10" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 8H10" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6 11.3333H8" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className="mypage-icon-btn">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4H14" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M6.66667 2V6" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M9.33333 2V6" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M3.33333 4L4 13.3333C4 13.6869 4.14048 14.0261 4.39052 14.2761C4.64057 14.5262 4.97971 14.6667 5.33333 14.6667H10.6667C11.0203 14.6667 11.3594 14.5262 11.6095 14.2761C11.8595 14.0261 12 13.6869 12 13.3333L12.6667 4" stroke="#525f7a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <button className="mypage-btn-ended">Ended</button>
-        </div>
+        {/* 숨겨진 요소: .mypage-task-due, .mypage-task-participant, .mypage-task-actions는 CSS로 제어됨 */}
       </div>
     </div>
   );
 }
-
