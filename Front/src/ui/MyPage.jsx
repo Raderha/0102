@@ -1,6 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios"; 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 import './MyPage.css';
+
+// Chart.js 등록
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 export default function MyPageComponent() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -32,17 +56,30 @@ export default function MyPageComponent() {
   }, []); 
 
   useEffect(() => {
+    if (!userId) {
+      console.warn("사용자 ID가 없습니다.");
+      return;
+    }
+
     const fetchUserData = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/users/${userId}/stats`);
         setUserInfo(res.data);
       } catch (error) {
         console.error("마이페이지 로딩 실패:", error);
+        // 에러 발생 시 빈 데이터로 초기화하여 UI가 깨지지 않도록
+        setUserInfo({
+          total_questions: 0,
+          total_score: 0,
+          submitted_reports: 0,
+          job_field: '',
+          recent_scores: []
+        });
       }
     };
 
-  fetchUserData();
-}, [userId]);
+    fetchUserData();
+  }, [userId, API_BASE_URL]);
 
 
   const currentYear = currentDate.getFullYear();
@@ -83,7 +120,132 @@ export default function MyPageComponent() {
     setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
   };
 
+  // Chart.js 데이터 준비 (Hook은 항상 같은 순서로 호출되어야 하므로 early return 전에 위치)
+  const chartData = useMemo(() => {
+    if (!userInfo || !userInfo.recent_scores || userInfo.recent_scores.length === 0) {
+      return null;
+    }
+
+    const labels = userInfo.recent_scores.map(rs => {
+      const date = new Date(rs.timestamp);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    });
+
+    // 점수를 0~5 범위로 클리핑 (5점 만점이므로)
+    const scores = userInfo.recent_scores.map(rs => Math.max(0, Math.min(5, rs.score)));
+    const questions = userInfo.recent_scores.map(rs => rs.question);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: '면접 점수',
+          data: scores,
+          borderColor: '#5b5ce2',
+          backgroundColor: 'rgba(91, 92, 226, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0, // 직선으로 표시
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointBackgroundColor: '#5b5ce2',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointHoverBackgroundColor: '#5b5ce2',
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 3,
+          clip: { left: 5, top: 5, right: 5, bottom: 5 } // 차트 영역 밖으로 나가는 부분 제거
+        }
+      ],
+      questions // tooltip에서 사용하기 위해 저장
+    };
+  }, [userInfo?.recent_scores]);
+
   if (!userInfo) return <div>Loading...</div>;
+
+  // 평균 점수 계산 (총 점수 / 총 질문 수)
+  const averageScore = userInfo.total_questions > 0 
+    ? Math.round(userInfo.total_score / userInfo.total_questions) 
+    : 0;
+
+  // Chart.js 옵션
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        titleFont: {
+          size: 14,
+          weight: 'bold'
+        },
+        bodyFont: {
+          size: 13
+        },
+        callbacks: {
+          title: (tooltipItems) => {
+            return `날짜: ${tooltipItems[0].label}`;
+          },
+          label: (context) => {
+            const index = context.dataIndex;
+            const question = chartData?.questions[index] || '';
+            return [
+              `점수: ${context.parsed.y}점`,
+              question ? `질문: ${question}` : ''
+            ].filter(Boolean);
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        min: -0.2, // 하단 여유 공간
+        max: 5.2, // 상단 여유 공간 (5점이 끝에 걸리지 않도록)
+        offset: true, // Y축에 여유 공간 추가
+        ticks: {
+          stepSize: 1,
+          max: 5, // 라벨은 5까지만 표시
+          min: 0, // 라벨은 0부터 표시
+          callback: function(value) {
+            // 0~5 범위의 정수만 표시
+            if (value >= 0 && value <= 5 && Number.isInteger(value)) {
+              return value;
+            }
+            return '';
+          },
+          font: {
+            size: 11,
+            color: '#525f7a'
+          },
+          color: '#525f7a',
+          padding: 10 // 틱 라벨에 패딩 추가
+        },
+        grid: {
+          color: '#e5e7ef',
+          lineWidth: 1,
+          drawBorder: false,
+          drawOnChartArea: true
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            size: 11,
+            color: '#525f7a'
+          },
+          color: '#525f7a'
+        },
+        grid: {
+          display: false
+        }
+      }
+    }
+  };
 
   return (
     <div className="mypage-container">
@@ -104,7 +266,7 @@ export default function MyPageComponent() {
           </div>
           <div className="mypage-kpi-content">
             <div className="mypage-kpi-number">{userInfo.total_questions}</div> 
-            <div className="mypage-kpi-label">Total Questions</div>
+            <div className="mypage-kpi-label">총 답변한 질문 수</div>
           </div>
         </div>
 
@@ -116,8 +278,8 @@ export default function MyPageComponent() {
             </svg>
           </div>
           <div className="mypage-kpi-content">
-            <div className="mypage-kpi-number">{userInfo.total_score}</div>
-            <div className="mypage-kpi-label">Total Socre</div>
+            <div className="mypage-kpi-number">{averageScore}</div>
+            <div className="mypage-kpi-label">평균 점수</div>
           </div>
         </div>
 
@@ -132,14 +294,14 @@ export default function MyPageComponent() {
           </div>
           <div className="mypage-kpi-content">
             <div className="mypage-kpi-number">{userInfo.submitted_reports}</div>
-            <div className="mypage-kpi-label">Submited Reports</div>
+            <div className="mypage-kpi-label">제출한 이력서 수</div>
           </div>
         </div>
 
         <div className="mypage-kpi-card mypage-kpi-card-event">
           <div className="mypage-kpi-content">
-            <div className="mypage-event-title">IT developer</div>
-            <div className="mypage-event-subtitle">Job</div>
+            <div className="mypage-event-title">{userInfo.job_field || '직종 미선택'}</div>
+            <div className="mypage-event-subtitle">직종</div>
           </div>
           <div className="mypage-event-circle"></div>
         </div>
@@ -149,60 +311,27 @@ export default function MyPageComponent() {
       <div className="mypage-charts-grid">
         {/* Visitor Statistics (첫 번째 카드 그대로) */}
         <div className="mypage-chart-card">
-          <div className="mypage-chart-header">
-            <h3 className="mypage-chart-title">Visitor statistics</h3>
-            <div className="mypage-chart-date">Nov - July</div>
+            <div className="mypage-chart-header">
+            <h3 className="mypage-chart-title">최근 면접 점수</h3>
+            <div className="mypage-chart-date">최근 5개 면접</div>
           </div>
 
-          <div className="mypage-line-chart">
-            <svg width="100%" height="200" viewBox="0 0 400 200" preserveAspectRatio="none">
-              
-              {/* Grid lines */}
-              <line x1="40" y1="20" x2="40" y2="180" stroke="#e5e7ef" strokeWidth="1"/>
-              <line x1="40" y1="180" x2="360" y2="180" stroke="#e5e7ef" strokeWidth="1"/>
-
-              {/* Y-axis labels */}
-              <text x="35" y="185" fontSize="10" fill="#525f7a" textAnchor="end">0</text>
-              <text x="35" y="145" fontSize="10" fill="#525f7a" textAnchor="end">25</text>
-              <text x="35" y="105" fontSize="10" fill="#525f7a" textAnchor="end">50</text>
-              <text x="35" y="65" fontSize="10" fill="#525f7a" textAnchor="end">100</text>
-
-              {/* X-axis labels (정렬 개선됨) */}
-              <text x="90" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Interruption</text>
-              <text x="150" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Filler</text>
-              <text x="210" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Keyword</text>
-              <text x="270" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">WPM</text>
-              <text x="330" y="195" fontSize="10" fill="#525f7a" textAnchor="middle">Repetition</text>
-
-              {/* Previous line (green) */}
-              <polyline
-                points="90,140 150,130 210,120 270,100 330,110"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2"
-              />
-
-              {/* Last 6 months line (blue) */}
-              <polyline
-                points="90,100 150,60 210,70 270,50 330,80"
-                fill="none"
-                stroke="#5b5ce2"
-                strokeWidth="2"
-              />
-            </svg>
-
-            <div className="mypage-chart-legend">
-              <div className="mypage-legend-item">
-                <span className="mypage-legend-dot mypage-legend-dot-blue"></span>
-                <span className="mypage-legend-label">LAST 6 MONTHS</span>
-                <span className="mypage-legend-value">475 273</span>
+          <div className="mypage-line-chart" style={{ height: '300px', position: 'relative' }}>
+            {chartData ? (
+              <Line data={chartData} options={chartOptions} />
+            ) : (
+              <div style={{ 
+                padding: '40px 20px', 
+                textAlign: 'center', 
+                color: '#999',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%'
+              }}>
+                아직 면접 기록이 없습니다.
               </div>
-              <div className="mypage-legend-item">
-                <span className="mypage-legend-dot mypage-legend-dot-green"></span>
-                <span className="mypage-legend-label">PREVIOUS</span>
-                <span className="mypage-legend-value">782 396</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
