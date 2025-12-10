@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+google-cloud-aiplatform
+firebase-admin
+pypdf
+python-dotenv
+python-multipart
+requests
+openai

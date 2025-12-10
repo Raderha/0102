@@ -1,0 +1,111 @@
+/* Community Filter Styles */
+.community-filter-wrapper {
+  margin: 20px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.community-filter-label {
+  font-size: 15px;
+  color: #475467;
+  font-weight: 600;
+}
+
+.community-filter-select {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Community List Styles */
+.community-list {
+  margin-top: 20px;
+}
+
+.community-empty {
+  padding: 20px;
+  color: #777;
+}
+
+/* Community Item Styles */
+.community-item-card {
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.community-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.community-item-question {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  flex: 1;
+}
+
+.community-item-arrow {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-left: 12px;
+  color: #5b5ce2;
+}
+
+.community-item-detail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  color: #475467;
+  line-height: 1.6;
+}
+
+.community-item-score {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #5b5ce2;
+  font-weight: 600;
+}
+
+.community-item-answer {
+  margin-bottom: 12px;
+}
+
+.community-item-answer-text {
+  margin-top: 8px;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.community-item-feedback {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.community-item-feedback-item {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.community-item-meta {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #666;
+}

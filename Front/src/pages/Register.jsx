@@ -1,7 +1,7 @@
 import React from 'react';
-import NavBar from '../ui/NavBar.jsx';
-import Footer from '../ui/Footer.jsx';
-import Register from '../ui/Register.jsx';
+import NavBar from '../components/layout/NavBar.jsx';
+import Footer from '../components/layout/Footer.jsx';
+import Register from '../components/features/Register.jsx';
 
 export default function RegisterPage() {
   return (

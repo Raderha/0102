@@ -1,0 +1,14 @@
+/* 공통 페이지 스타일 */
+.page-main {
+  width: min(960px, 92%);
+  margin: 0 auto;
+}
+
+.page-main-padding {
+  padding: 20px 0;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 800;
+}

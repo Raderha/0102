@@ -1,0 +1,198 @@
+/* 공통 인증 폼 스타일 (Login, Register, FindPW) */
+.auth-container {
+  display: flex;
+  width: 850px;
+  height: 550px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  position: relative;
+}
+
+.auth-container.register {
+  height: 720px;
+}
+
+.auth-welcome {
+  flex: 1;
+  background: linear-gradient(135deg, #6C63FF 0%, #2F80ED 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+}
+
+.auth-welcome-content {
+  margin-top: 50px;
+}
+
+.auth-logo {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  border: 3px solid #fff;
+  border-radius: 10px;
+  padding: 0 15px;
+  display: inline-block;
+}
+
+.auth-brand {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.auth-welcome-text {
+  margin: 12px 0 0;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.auth-link {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.auth-form-area {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.auth-form-area.register {
+  padding: 30px 40px;
+  overflow-y: visible;
+}
+
+.auth-form-box {
+  width: 100%;
+  max-width: 350px;
+}
+
+.auth-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #6C63FF;
+  margin: 0;
+}
+
+.auth-subtitle {
+  color: #666;
+  margin: 6px 0 32px;
+}
+
+.auth-subtitle.register {
+  margin: 6px 0 20px;
+}
+
+.auth-subtitle.findpw {
+  margin: 6px 0 28px;
+}
+
+.auth-group {
+  margin-bottom: 22px;
+}
+
+.auth-group.register {
+  margin-bottom: 16px;
+}
+
+.auth-group.findpw {
+  margin-bottom: 28px;
+}
+
+.auth-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 2px solid #ddd;
+  font-size: 1rem;
+  outline: none;
+  background: transparent;
+}
+
+.auth-select {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-bottom: 2px solid #ddd;
+  font-size: 1rem;
+  outline: none;
+  background: transparent;
+  appearance: none;
+}
+
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 24px;
+  font-size: 0.9rem;
+}
+
+.auth-remember {
+  display: flex;
+  align-items: center;
+  color: #666;
+  gap: 8px;
+}
+
+.auth-primary-btn {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #6C63FF, #2F80ED);
+  cursor: pointer;
+}
+
+.auth-primary-btn.register {
+  margin-top: 8px;
+}
+
+.auth-primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-helper {
+  text-align: center;
+  margin-top: 24px;
+  color: #666;
+}
+
+.auth-helper.register {
+  margin-top: 20px;
+}
+
+.auth-anchor {
+  color: #6C63FF;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-error-box {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  background-color: #fee;
+  color: #c33;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  border: 1px solid #fcc;
+}

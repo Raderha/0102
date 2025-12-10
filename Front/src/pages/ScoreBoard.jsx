@@ -1,13 +1,14 @@
 import React from 'react';
-import NavBar from '../ui/NavBar.jsx';
-import Footer from '../ui/Footer.jsx';
-import ScoreBoard from '../ui/ScoreBoard.jsx';
+import NavBar from '../components/layout/NavBar.jsx';
+import Footer from '../components/layout/Footer.jsx';
+import ScoreBoard from '../components/features/ScoreBoard.jsx';
+import '../styles/Pages.css';
 
 function ScoreBoardPage() {
   return (
     <div className="page">
       <NavBar />
-      <main style={{ padding: '20px 0' }}>
+      <main className="page-main-padding">
         <ScoreBoard />
       </main>
       <Footer />

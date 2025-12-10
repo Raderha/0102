@@ -1,13 +1,14 @@
 import React from 'react';
-import NavBar from '../ui/NavBar.jsx';
-import Footer from '../ui/Footer.jsx';
-import AiInterview from '../ui/AiInterview.jsx';
+import NavBar from '../components/layout/NavBar.jsx';
+import Footer from '../components/layout/Footer.jsx';
+import AiInterview from '../components/features/AiInterview.jsx';
+import '../styles/Pages.css';
 
 export default function AiInterviewPage() {
   return (
     <div className="page">
       <NavBar />
-      <main style={{ padding: '20px 0' }}>
+      <main className="page-main-padding">
         <AiInterview />
       </main>
       <Footer />

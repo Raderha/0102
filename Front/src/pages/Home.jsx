@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import NavBar from '../ui/NavBar.jsx';
-import Hero from '../ui/Hero.jsx';
-import Features from '../ui/Features.jsx';
-import Footer from '../ui/Footer.jsx';
-import UploadFile from '../ui/UploadFile.jsx';
-import WarningModal from '../ui/WarningModal.jsx';
-import Login from '../ui/Login.jsx';
-import Register from '../ui/Register.jsx';
-import FindPW from '../ui/FindPW.jsx';
+import NavBar from '../components/layout/NavBar.jsx';
+import Hero from '../components/common/Hero.jsx';
+import Features from '../components/common/Features.jsx';
+import Footer from '../components/layout/Footer.jsx';
+import UploadFile from '../components/features/UploadFile.jsx';
+import WarningModal from '../components/common/WarningModal.jsx';
+import Login from '../components/features/Login.jsx';
+import Register from '../components/features/Register.jsx';
+import FindPW from '../components/features/FindPW.jsx';
 
 export default function Home() {
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
