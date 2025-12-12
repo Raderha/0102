@@ -1,7 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 import time
+import os
+
+# .env 파일 로드
+load_dotenv()
 
 from app.database import initialize_db
 from app.services.ai_service import init_ai

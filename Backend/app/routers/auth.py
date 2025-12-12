@@ -10,9 +10,11 @@ from app.models import UserRegister, UserLogin, AuthResponse
 # 라우터 설정 (URL 앞에 /api/auth가 자동으로 붙음)
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
-# ⭐ [중요] 아까 firebaseConfig 안에서 찾은 apiKey를 따옴표 안에 넣으세요!
-# (보안을 위해 나중에는 os.getenv("FIREBASE_WEB_API_KEY")로 변경하는 것을 권장합니다)
-FIREBASE_WEB_API_KEY = "AIzaSyDFpuxuTdnGDTeG0RRrHsWAf3XMBKjGGw0"
+# Firebase Web API Key는 환경변수에서 가져옵니다
+FIREBASE_WEB_API_KEY = os.getenv("FIREBASE_WEB_API_KEY")
+
+if not FIREBASE_WEB_API_KEY:
+    print("⚠️ 경고: FIREBASE_WEB_API_KEY가 .env 파일에 설정되지 않았습니다.")
 
 # -------------------------------------------------------------------
 # [UC-1] 회원가입
@@ -61,6 +63,9 @@ async def login_user(creds: UserLogin):
     
     # 1. 비밀번호 검증 (Firebase REST API 사용)
     # 구글 서버에 이메일과 비밀번호를 보내서 맞는지 확인합니다.
+    if not FIREBASE_WEB_API_KEY:
+        raise HTTPException(status_code=500, detail="서버 설정 오류: FIREBASE_WEB_API_KEY가 설정되지 않았습니다.")
+    
     verify_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_WEB_API_KEY}"
     
     payload = {
