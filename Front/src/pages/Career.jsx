@@ -1,7 +1,7 @@
 import React from 'react';
-import NavBar from '../components/layout/NavBar.jsx';
+import NavBar from '../components/common/NavBar.jsx';
 import SelectCareer from '../components/features/SelectCareer.jsx';
-import Footer from '../components/layout/Footer.jsx';
+import Footer from '../components/common/Footer.jsx';
 
 export default function CareerPage() {
   return (

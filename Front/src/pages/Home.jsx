@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import NavBar from '../components/layout/NavBar.jsx';
-import Hero from '../components/common/Hero.jsx';
-import Features from '../components/common/Features.jsx';
-import Footer from '../components/layout/Footer.jsx';
+import NavBar from '../components/common/NavBar.jsx';
+import Footer from '../components/common/Footer.jsx';
+import Hero from '../components/features/Hero.jsx';
+import Features from '../components/features/Features.jsx';
 import UploadFile from '../components/features/UploadFile.jsx';
-import WarningModal from '../components/common/WarningModal.jsx';
+import WarningModal from '../components/features/WarningModal.jsx';
 import Login from '../components/features/Login.jsx';
 import Register from '../components/features/Register.jsx';
 import FindPW from '../components/features/FindPW.jsx';

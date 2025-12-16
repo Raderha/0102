@@ -68,71 +68,132 @@ async def delete_user_account(user_id: str):
 async def get_mypage_stats(user_id: str):
     db = get_db()
     
+    # 기본값 초기화
+    user_job = "미지정"
+    count_questions = 0
+    sum_score = 0
+    count_reports = 0
+    recent_score_list = []
+    
     try:
+        print(f"📊 [MyPage Stats] 사용자 통계 조회 시작: user_id={user_id}")
+        
         # 1. 사용자 정보(직종) 가져오기
-        user_doc_ref = db.collection("users").document(user_id).get()
-        user_job = "미지정"
-        if user_doc_ref.exists:
-            user_job = user_doc_ref.to_dict().get("desiredJob", "미지정")
+        try:
+            user_doc_ref = db.collection("users").document(user_id).get()
+            if user_doc_ref.exists:
+                user_data = user_doc_ref.to_dict()
+                user_job = user_data.get("desiredJob", "미지정")
+                print(f"   ✅ 사용자 정보 조회 성공: 직종={user_job}")
+            else:
+                print(f"   ⚠️ 사용자 문서가 존재하지 않음: user_id={user_id}")
+        except Exception as e:
+            print(f"   ⚠️ 사용자 정보 조회 중 오류: {e}")
 
-        # 2. 전체 통계 계산 (기존 로직 유지)
-        interviews_col = db.collection("users").document(user_id).collection("interviews")
-        all_interviews = interviews_col.stream()
-        
-        count_questions = 0
-        sum_score = 0
-        
-        for doc in all_interviews:
-            data = doc.to_dict()
-            result = data.get("analysis_result", {})
-            r_score = result.get("relevance_score", 0)
-            l_score = result.get("logic_score", 0)
+        # 2. 전체 통계 계산
+        try:
+            interviews_col = db.collection("users").document(user_id).collection("interviews")
+            all_interviews = interviews_col.stream()
             
-            sum_score += (r_score + l_score)
-            count_questions += 1
+            for doc in all_interviews:
+                try:
+                    data = doc.to_dict()
+                    result = data.get("analysis_result", {})
+                    if isinstance(result, dict):
+                        r_score = float(result.get("relevance_score", 0) or 0)
+                        l_score = float(result.get("logic_score", 0) or 0)
+                        sum_score += (r_score + l_score)
+                        count_questions += 1
+                except Exception as e:
+                    print(f"   ⚠️ 면접 문서 처리 중 오류 (doc_id={doc.id}): {e}")
+                    continue
 
-        # 3. 이력서 수 계산 (기존 로직 유지)
-        resumes_ref = db.collection("users").document(user_id).collection("resumes").stream()
-        count_reports = len(list(resumes_ref))
+            print(f"   📈 면접 통계: 총 질문 수={count_questions}, 총 점수={sum_score}")
+        except Exception as e:
+            print(f"   ⚠️ 면접 통계 조회 중 오류: {e}")
 
-        # 4. ⭐ [핵심 추가] 가장 최근 5개 질문의 점수 가져오기
-        # created_at 기준 최신순 정렬 -> 5개만 가져오기
-        recent_docs = interviews_col.order_by("created_at", direction=firestore.Query.DESCENDING).limit(5).stream()
-        
-        recent_score_list = []
-        for doc in recent_docs:
-            data = doc.to_dict()
-            result = data.get("analysis_result", {})
+        # 3. 이력서 수 계산
+        try:
+            resumes_ref = db.collection("users").document(user_id).collection("resumes").stream()
+            count_reports = len(list(resumes_ref))
+            print(f"   📄 이력서 수: {count_reports}")
+        except Exception as e:
+            print(f"   ⚠️ 이력서 수 조회 중 오류: {e}")
+
+        # 4. 최근 5개 질문의 점수 가져오기
+        try:
+            interviews_col = db.collection("users").document(user_id).collection("interviews")
+            # 정렬 쿼리 시도
+            try:
+                recent_docs = interviews_col.order_by("created_at", direction=firestore.Query.DESCENDING).limit(5).stream()
+            except Exception as order_error:
+                print(f"   ⚠️ 정렬 쿼리 실패 (인덱스 없을 수 있음): {order_error}")
+                # 정렬 실패 시 전체 조회
+                recent_docs = interviews_col.stream()
             
-            # 점수 합산 (적절성 + 논리성)
-            score_val = (result.get("relevance_score", 0) + result.get("logic_score", 0))/2.0
-            
-            # 날짜 포맷팅 (YYYY-MM-DDT... -> YYYY-MM-DD)
-            raw_date = data.get("created_at", "")
-            formatted_date = raw_date.split("T")[0] if "T" in raw_date else raw_date
+            all_scores = []
+            for doc in recent_docs:
+                try:
+                    data = doc.to_dict()
+                    result = data.get("analysis_result", {})
+                    
+                    if isinstance(result, dict):
+                        r_score = float(result.get("relevance_score", 0) or 0)
+                        l_score = float(result.get("logic_score", 0) or 0)
+                        score_val = (r_score + l_score) / 2.0
+                        
+                        raw_date = data.get("created_at", "")
+                        formatted_date = raw_date.split("T")[0] if "T" in raw_date else raw_date
 
-            recent_score_list.append(RecentScore(
-                timestamp=formatted_date,
-                score=score_val,
-                question=data.get("question", "질문 없음")
-            ))
-        
-        # 그래프는 보통 과거 -> 현재 순서로 그리므로 리스트를 뒤집어 줌 (선택 사항)
-        recent_score_list.reverse()
+                        all_scores.append({
+                            "timestamp": formatted_date,
+                            "score": score_val,
+                            "question": data.get("question", "질문 없음")
+                        })
+                except Exception as e:
+                    print(f"   ⚠️ 최근 점수 처리 중 오류: {e}")
+                    continue
+            
+            # 날짜 기준으로 정렬 (과거 -> 현재)
+            all_scores.sort(key=lambda x: x["timestamp"])
+            
+            # 최근 5개만 유지
+            recent_scores_sorted = all_scores[-5:] if len(all_scores) > 5 else all_scores
+            
+            recent_score_list = [
+                RecentScore(
+                    timestamp=item["timestamp"],
+                    score=item["score"],
+                    question=item["question"]
+                )
+                for item in recent_scores_sorted
+            ]
+            
+            print(f"   📊 최근 점수 개수: {len(recent_score_list)}")
+        except Exception as e:
+            print(f"   ⚠️ 최근 점수 조회 중 오류: {e}")
 
         # 5. 최종 결과 반환
+        result = MyPageStats(
+            total_questions=count_questions,
+            total_score=sum_score,
+            submitted_reports=count_reports,
+            job_field=user_job,
+            recent_scores=recent_score_list
+        )
+        
+        print(f"   ✅ 통계 조회 완료: 질문={result.total_questions}, 점수={result.total_score}, 이력서={result.submitted_reports}, 직종={result.job_field}")
+        return result
+
+    except Exception as e:
+        print(f"❌ [MyPage Stats] 통계 조회 중 치명적 오류: {e}")
+        import traceback
+        traceback.print_exc()
+        # 에러 발생 시 안전하게 기본값 반환 (하지만 user_job은 이미 설정됨)
         return MyPageStats(
             total_questions=count_questions,
             total_score=sum_score,
             submitted_reports=count_reports,
-            job_field=user_job,             # 추가됨
-            recent_scores=recent_score_list # 추가됨
-        )
-
-    except Exception as e:
-        print(f"통계 조회 오류: {e}")
-        # 에러 발생 시 안전하게 기본값 반환
-        return MyPageStats(
-            total_questions=0, total_score=0, submitted_reports=0, 
-            job_field="알 수 없음", recent_scores=[]
+            job_field=user_job if user_job != "미지정" else "알 수 없음",
+            recent_scores=recent_score_list
         )

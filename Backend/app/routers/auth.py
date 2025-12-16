@@ -61,9 +61,13 @@ async def register_user(creds: UserRegister):
 async def login_user(creds: UserLogin):
     db = get_db()
     
+    # 디버깅: 받은 요청 정보 로깅
+    print(f"🔐 [Login Request] 이메일: {creds.email}")
+    
     # 1. 비밀번호 검증 (Firebase REST API 사용)
     # 구글 서버에 이메일과 비밀번호를 보내서 맞는지 확인합니다.
     if not FIREBASE_WEB_API_KEY:
+        print("❌ [Login Error] FIREBASE_WEB_API_KEY가 설정되지 않았습니다.")
         raise HTTPException(status_code=500, detail="서버 설정 오류: FIREBASE_WEB_API_KEY가 설정되지 않았습니다.")
     
     verify_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={FIREBASE_WEB_API_KEY}"
@@ -75,11 +79,13 @@ async def login_user(creds: UserLogin):
     }
     
     try:
+        print(f"🌐 [Firebase Auth] Firebase 인증 요청 중...")
         res = requests.post(verify_url, json=payload)
         
         # 200 OK가 아니면 비밀번호가 틀린 것임
         if res.status_code != 200:
-            print(f"❌ [Login Fail] 비밀번호 불일치: {res.text}")
+            print(f"❌ [Login Fail] Firebase 인증 실패 (상태 코드: {res.status_code})")
+            print(f"   응답 내용: {res.text}")
             raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 잘못되었습니다.")
             
     except requests.exceptions.RequestException as e:

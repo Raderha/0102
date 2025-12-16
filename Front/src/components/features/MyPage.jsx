@@ -57,16 +57,39 @@ export default function MyPageComponent() {
 
   useEffect(() => {
     if (!userId) {
-      console.warn("사용자 ID가 없습니다.");
+      console.warn("⚠️ [MyPage] 사용자 ID가 없습니다.");
       return;
     }
 
     const fetchUserData = async () => {
       try {
+        console.log(`📡 [MyPage] API 호출 시작: ${API_BASE_URL}/api/users/${userId}/stats`);
         const res = await axios.get(`${API_BASE_URL}/api/users/${userId}/stats`);
+        console.log("✅ [MyPage] API 응답 성공:", res.data);
+        
+        // 응답 데이터 검증
+        if (!res.data) {
+          console.warn("⚠️ [MyPage] 응답 데이터가 비어있습니다.");
+          setUserInfo({
+            total_questions: 0,
+            total_score: 0,
+            submitted_reports: 0,
+            job_field: '',
+            recent_scores: []
+          });
+          return;
+        }
+        
         setUserInfo(res.data);
       } catch (error) {
-        console.error("마이페이지 로딩 실패:", error);
+        console.error("❌ [MyPage] 마이페이지 로딩 실패:", error);
+        console.error("   에러 상세:", {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          statusText: error.response?.statusText
+        });
+        
         // 에러 발생 시 빈 데이터로 초기화하여 UI가 깨지지 않도록
         setUserInfo({
           total_questions: 0,
